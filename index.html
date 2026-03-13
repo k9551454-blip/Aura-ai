@@ -315,10 +315,11 @@
                 "1:1": "1:1",
                 "4:5": "4:5",
                 "16:9": "16:9"
+
             };
 
             // Current public endpoint structure for Imagen via Gemini API (v1beta)
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`;
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-fast-001:predict?key=${apiKey}`;
 
             const payload = {
                 instances: [{ prompt: prompt }],
