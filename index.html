@@ -227,8 +227,7 @@
             <button id="btnGenerate">Generate</button>
         </div>
     </div>
-
-        <script>
+    <script>
         const promptInput = document.getElementById('uiPrompt');
         const ratioSelect = document.getElementById('uiRatio');
         const btnGenerate = document.getElementById('btnGenerate');
@@ -243,7 +242,7 @@
             setTimeout(() => { errorToast.style.display = 'none'; }, 5000);
         }
 
-        async function generateImage() {
+        function generateImage() {
             const prompt = promptInput.value.trim();
             const ratio = ratioSelect.value;
 
@@ -252,52 +251,47 @@
                 return;
             }
 
-            // Lock the UI
+            // Lock UI
             btnGenerate.disabled = true;
             btnGenerate.textContent = "Generating...";
             placeholderText.style.display = 'none';
+            
+            // Hide previous image, show loader
             resultImage.style.display = 'none';
+            resultImage.src = ""; // Clear old image
             loader.style.display = 'block';
             errorToast.style.display = 'none';
 
-            // Calculate sizes
             let width = 1024;
             let height = 1024;
             if (ratio === "16:9") { height = 576; }
             else if (ratio === "9:16") { width = 576; }
 
-            // Connect to Pollinations AI
             const safePrompt = encodeURIComponent(prompt);
             const randomSeed = Math.floor(Math.random() * 1000000);
-            const imageUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=${width}&height=${height}&nologo=true&seed=${randomSeed}`;
+            const imageUrl = "https://image.pollinations.ai/prompt/" + safePrompt + "?width=" + width + "&height=" + height + "&nologo=true&seed=" + randomSeed;
 
-            try {
-                // 'fetch' forces the mobile browser to wait for the AI to finish painting
-                const response = await fetch(imageUrl);
-                
-                if (!response.ok) {
-                    throw new Error("Server overloaded.");
-                }
-                
-                // Convert the response into an image file
-                const imageBlob = await response.blob();
-                resultImage.src = URL.createObjectURL(imageBlob);
-                
-                // Display it
+            // Attach the loading event DIRECTLY to the visible image element
+            resultImage.onload = function() {
+                loader.style.display = 'none';
                 resultImage.style.display = 'block';
-                loader.style.display = 'none';
-            } catch (error) {
-                showError("The open-source engine is highly active right now. Please try again.");
-                loader.style.display = 'none';
-                placeholderText.style.display = 'block';
-            } finally {
-                // Unlock the UI
                 btnGenerate.disabled = false;
                 btnGenerate.textContent = "Generate";
-            }
+            };
+
+            resultImage.onerror = function() {
+                showError("The free server is currently overloaded. Please try again.");
+                loader.style.display = 'none';
+                placeholderText.style.display = 'block';
+                placeholderText.textContent = "Generation failed. Try again.";
+                btnGenerate.disabled = false;
+                btnGenerate.textContent = "Generate";
+            };
+
+            // Force the HTML element to start downloading the image
+            resultImage.src = imageUrl;
         }
 
-        // Run when button is clicked or Enter is pressed
         btnGenerate.addEventListener('click', generateImage);
         promptInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
@@ -306,5 +300,6 @@
         });
     </script>
 
+       
 </body>
 </html>
