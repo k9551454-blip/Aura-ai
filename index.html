@@ -61,7 +61,6 @@
             font-weight: 600;
         }
 
-        input[type="password"],
         input[type="text"],
         select {
             background-color: var(--bg-input);
@@ -201,7 +200,7 @@
 
         <div class="settings-group">
             <label>API Key</label>
-            <input type="password" id="uiApiKey" placeholder="Paste Key here...">
+            <input type="text" id="uiApiKey" placeholder="Not required for free engine..." disabled>
         </div>
 
         <div class="settings-group">
@@ -230,8 +229,8 @@
     </div>
 
     <script>
-        const apiKeyInput = document.getElementById('uiApiKey');
         const promptInput = document.getElementById('uiPrompt');
+        const ratioSelect = document.getElementById('uiRatio');
         const btnGenerate = document.getElementById('btnGenerate');
         const resultImage = document.getElementById('resultImage');
         const placeholderText = document.getElementById('placeholderText');
@@ -245,13 +244,9 @@
         }
 
         async function generateImage() {
-            const apiKey = apiKeyInput.value.trim();
             const prompt = promptInput.value.trim();
+            const ratio = ratioSelect.value;
 
-            if (!apiKey) {
-                showError("Please paste your API Key in the sidebar.");
-                return;
-            }
             if (!prompt) {
                 showError("Please enter a prompt.");
                 return;
@@ -264,52 +259,33 @@
             loader.style.display = 'block';
             errorToast.style.display = 'none';
 
-            const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=" + apiKey;
-            
-            const payload = {
-                contents: [
-                    {
-                        parts: [
-                            { text: prompt }
-                        ]
-                    }
-                ]
-            };
+            let width = 1024;
+            let height = 1024;
+            if (ratio === "16:9") { height = 576; }
+            else if (ratio === "9:16") { width = 576; }
 
-            try {
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+            const safePrompt = encodeURIComponent(prompt);
+            const randomSeed = Math.floor(Math.random() * 1000000);
+            const imageUrl = "https://image.pollinations.ai/prompt/" + safePrompt + "?width=" + width + "&height=" + height + "&nologo=true&seed=" + randomSeed;
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || "Request rejected.");
-                }
-
-                const data = await response.json();
-
-                if (data.candidates && data.candidates[0].content.parts[0].inlineData) {
-                    const base64Image = data.candidates[0].content.parts[0].inlineData.data;
-                    const mimeType = data.candidates[0].content.parts[0].inlineData.mimeType || "image/jpeg";
-                    
-                    resultImage.src = "data:" + mimeType + ";base64," + base64Image;
-                    resultImage.style.display = 'block';
-                    loader.style.display = 'none';
-                } else {
-                    throw new Error("Image data was missing from the response.");
-                }
-
-            } catch (error) {
-                showError(error.message);
+            const img = new Image();
+            img.onload = function() {
+                resultImage.src = imageUrl;
+                resultImage.style.display = 'block';
                 loader.style.display = 'none';
-                placeholderText.style.display = 'block';
-                placeholderText.textContent = "Generation failed. Try again.";
-            } finally {
                 btnGenerate.disabled = false;
                 btnGenerate.textContent = "Generate";
-            }
+            };
+            
+            img.onerror = function() {
+                showError("The engine is busy. Try again.");
+                loader.style.display = 'none';
+                placeholderText.style.display = 'block';
+                btnGenerate.disabled = false;
+                btnGenerate.textContent = "Generate";
+            };
+            
+            img.src = imageUrl;
         }
 
         btnGenerate.addEventListener('click', generateImage);
@@ -321,5 +297,3 @@
     </script>
 </body>
 </html>
-
-           
