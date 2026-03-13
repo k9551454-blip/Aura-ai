@@ -227,7 +227,7 @@
             <button id="btnGenerate">Generate</button>
         </div>
     </div>
-    <script>
+     <script>
         const promptInput = document.getElementById('uiPrompt');
         const ratioSelect = document.getElementById('uiRatio');
         const btnGenerate = document.getElementById('btnGenerate');
@@ -256,9 +256,8 @@
             btnGenerate.textContent = "Generating...";
             placeholderText.style.display = 'none';
             
-            // Hide previous image, show loader
+            // Hide previous image, show loader (BUGGY src="" LINE REMOVED)
             resultImage.style.display = 'none';
-            resultImage.src = ""; // Clear old image
             loader.style.display = 'block';
             errorToast.style.display = 'none';
 
@@ -269,9 +268,12 @@
 
             const safePrompt = encodeURIComponent(prompt);
             const randomSeed = Math.floor(Math.random() * 1000000);
-            const imageUrl = "https://image.pollinations.ai/prompt/" + safePrompt + "?width=" + width + "&height=" + height + "&nologo=true&seed=" + randomSeed;
+            const imageUrl = "[https://image.pollinations.ai/prompt/](https://image.pollinations.ai/prompt/)" + safePrompt + "?width=" + width + "&height=" + height + "&nologo=true&seed=" + randomSeed;
 
-            // Attach the loading event DIRECTLY to the visible image element
+            // Reset handlers to prevent any weird overlapping errors
+            resultImage.onload = null;
+            resultImage.onerror = null;
+
             resultImage.onload = function() {
                 loader.style.display = 'none';
                 resultImage.style.display = 'block';
@@ -280,7 +282,7 @@
             };
 
             resultImage.onerror = function() {
-                showError("The free server is currently overloaded. Please try again.");
+                showError("Generation failed. Please try again.");
                 loader.style.display = 'none';
                 placeholderText.style.display = 'block';
                 placeholderText.textContent = "Generation failed. Try again.";
@@ -288,7 +290,7 @@
                 btnGenerate.textContent = "Generate";
             };
 
-            // Force the HTML element to start downloading the image
+            // Tell the browser to download the AI image natively
             resultImage.src = imageUrl;
         }
 
@@ -299,7 +301,6 @@
             }
         });
     </script>
-
-       
 </body>
 </html>
+
