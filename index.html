@@ -227,7 +227,7 @@
             <button id="btnGenerate">Generate</button>
         </div>
     </div>
-     <script>
+         <script>
         const promptInput = document.getElementById('uiPrompt');
         const ratioSelect = document.getElementById('uiRatio');
         const btnGenerate = document.getElementById('btnGenerate');
@@ -255,11 +255,14 @@
             btnGenerate.disabled = true;
             btnGenerate.textContent = "Generating...";
             placeholderText.style.display = 'none';
-            
-            // Hide previous image, show loader (BUGGY src="" LINE REMOVED)
-            resultImage.style.display = 'none';
-            loader.style.display = 'block';
             errorToast.style.display = 'none';
+            
+            // THE FIX: Do not hide the image! 
+            // We keep it 'block' but fade it to 10% opacity. 
+            // This forces the mobile browser to keep the download connection open.
+            resultImage.style.display = 'block';
+            resultImage.style.opacity = '0.1'; 
+            loader.style.display = 'block';
 
             let width = 1024;
             let height = 1024;
@@ -268,29 +271,28 @@
 
             const safePrompt = encodeURIComponent(prompt);
             const randomSeed = Math.floor(Math.random() * 1000000);
-            const imageUrl = "[https://image.pollinations.ai/prompt/](https://image.pollinations.ai/prompt/)" + safePrompt + "?width=" + width + "&height=" + height + "&nologo=true&seed=" + randomSeed;
+            const imageUrl = "https://image.pollinations.ai/prompt/" + safePrompt + "?width=" + width + "&height=" + height + "&nologo=true&seed=" + randomSeed;
 
-            // Reset handlers to prevent any weird overlapping errors
+            // Reset handlers
             resultImage.onload = null;
             resultImage.onerror = null;
 
             resultImage.onload = function() {
+                // When finished, snap the image back to 100% visibility
+                resultImage.style.opacity = '1'; 
                 loader.style.display = 'none';
-                resultImage.style.display = 'block';
                 btnGenerate.disabled = false;
                 btnGenerate.textContent = "Generate";
             };
 
             resultImage.onerror = function() {
-                showError("Generation failed. Please try again.");
+                showError("Phone timed out the request. Hit generate again.");
                 loader.style.display = 'none';
-                placeholderText.style.display = 'block';
-                placeholderText.textContent = "Generation failed. Try again.";
                 btnGenerate.disabled = false;
                 btnGenerate.textContent = "Generate";
             };
 
-            // Tell the browser to download the AI image natively
+            // Start the download
             resultImage.src = imageUrl;
         }
 
@@ -301,6 +303,8 @@
             }
         });
     </script>
+
+            
 </body>
 </html>
 
