@@ -309,49 +309,38 @@
          * Connects to Google Gemini API (Imagen 3 endpoint context)
          * Note: Google's Imagen API structure via standard REST.
          */
-        async function callGeminiImagenAPI(prompt, apiKey, ratio) {
-            // Mapping ratios for the API
-            const ratioMap = {
-                "1:1": "1:1",
-                "4:5": "4:5",
-                "16:9": "16:9"
-
-            };
-
-            // Current public endpoint structure for Imagen via Gemini API (v1beta)
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview
-            :predict?key=${apiKey}`;
-
-            const payload = {
-                instances: [{ prompt: prompt }],
-                parameters: {
-                    sampleCount: 1,
-                    aspectRatio: ratioMap[ratio] || "1:1",
-                    outputOptions: { mimeType: "image/jpeg" }
-                }
-            };
-
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error?.message || "API request failed. Check your API key and permissions.");
+ async function callGeminiImagenAPI(prompt, apiKey, ratio) {
+    const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=" + apiKey;
+    
+    const payload = {
+        contents: [
+            {
+                parts: [
+                    { text: prompt }
+                ]
             }
+        ]
+    };
 
-            const data = await response.json();
-            
-            // Imagen returns base64 encoded strings in the predictions array
-            if (data.predictions && data.predictions.length > 0) {
-                const base64Data = data.predictions[0].bytesBase64Encoded;
-                return `data:image/jpeg;base64,${base64Data}`;
-            } else {
-                throw new Error("No image data returned from API.");
-            }
-        }
+    const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Google API rejected the request.");
+    }
+
+    const data = await response.json();
+    
+    try {
+        return data.candidates[0].content.parts[0].inlineData.data;
+    } catch (e) {
+        throw new Error("Google generated a response, but the image data was missing.");
+    }
+}
 
         /**
          * Mock Generation for UI/UX testing when API key is missing
