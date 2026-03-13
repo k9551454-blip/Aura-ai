@@ -319,7 +319,8 @@
             };
 
             // Current public endpoint structure for Imagen via Gemini API (v1beta)
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-fast-001:predict?key=${apiKey}`;
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview
+            :predict?key=${apiKey}`;
 
             const payload = {
                 instances: [{ prompt: prompt }],
